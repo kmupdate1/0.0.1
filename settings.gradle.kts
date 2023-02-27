@@ -1,0 +1,1 @@
+rootProject.name = "jp.wataju.customer-manager"
