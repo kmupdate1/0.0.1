@@ -77,8 +77,7 @@
                 {{#product_detail}}
                     <table class="table">
                         <tr><th>商品名</th><td>{{product.productName}}</td></tr>
-                        <tr><th>価格</th><td>{{product.price}}</td></tr>
-                        <tr><th>税込み</th><td>{{produc.price}}</td></tr>
+                        <tr><th>価格（税込み）</th><td>{{product.price}}円（{{product.priceTax}}円）</td></tr>
                     </table>
                 {{/product_detail}}
             </div>

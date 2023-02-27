@@ -4,8 +4,8 @@ import jp.wataju.model.table.Account
 import org.jetbrains.exposed.sql.ResultRow
 
 class Account(resultRow: ResultRow) {
-    var accountId = resultRow[Account.accountId]
-    var identify  = resultRow[Account.identify]
-    var password  = resultRow[Account.password]
-    var admin     = resultRow[Account.admin]
+    val accountId = resultRow[Account.accountId]
+    val identify  = resultRow[Account.identify]
+    val password  = resultRow[Account.password]
+    val admin     = resultRow[Account.admin]
 }

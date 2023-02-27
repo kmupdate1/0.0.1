@@ -12,3 +12,5 @@ const val CUSTOMER_INFORMATION_LIST = "お客様情報一覧"
 const val CUSTOMER_INFORMATION_DETAIL = "お客様情報詳細"
 const val PRODUCT_INFORMATION_LIST = "商品情報一覧"
 const val PRODUCT_INFORMATION_DETAIL = "商品情報詳細"
+
+const val TAX_INCLUDE = 1.08

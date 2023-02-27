@@ -4,14 +4,14 @@ import jp.wataju.model.table.Customer
 import org.jetbrains.exposed.sql.ResultRow
 
 class Customer(resultRow: ResultRow) {
-    var customerId = resultRow[Customer.customerId]
-    var customerName = resultRow[Customer.customerName]
-    var customerNameKana = resultRow[Customer.customerNameKana]
-    var zipcode = resultRow[Customer.zipcode]
-    var prefecture = resultRow[Customer.prefecture]
-    var address1 = resultRow[Customer.address1]
-    var address2 = resultRow[Customer.address2]
-    var address3 = resultRow[Customer.address3]
-    var customerPhone = resultRow[Customer.customerPhone]
-    var customerMail = resultRow[Customer.customerMail]
+    val customerId = resultRow[Customer.customerId]
+    val customerName = resultRow[Customer.customerName]
+    val customerNameKana = resultRow[Customer.customerNameKana]
+    val zipcode = resultRow[Customer.zipcode]
+    val prefecture = resultRow[Customer.prefecture]
+    val address1 = resultRow[Customer.address1]
+    val address2 = resultRow[Customer.address2]
+    val address3 = resultRow[Customer.address3]
+    val customerPhone = resultRow[Customer.customerPhone]
+    val customerMail = resultRow[Customer.customerMail]
 }

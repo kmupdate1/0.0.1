@@ -258,7 +258,7 @@ fun Application.configureTemplating() {
                 "product_detail" to true
             )
 
-            call.respond(MustacheContent("customer/customer.hbs", model))
+            call.respond(MustacheContent("product/product.hbs", model))
         }
 
         // ユーザ設定
