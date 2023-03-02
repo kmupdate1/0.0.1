@@ -55,9 +55,7 @@
                     <div class="col order-last">
                         <div class="d-flex flex-row-reverse bd-highlight">
                             <div class="p-2 bd-highlight">
-                                <button class="btn btn-outline-primary" type="button">
-                                    <a href="/customer-manager/unauthenticated/logout">ログアウト</a>
-                                </button>
+                                <a href="/logout" class="btn btn-outline-primary btn-sm">ログアウト</a>
                             </div>
                         </div>
                     </div>
@@ -73,6 +71,11 @@
                             <a href="/customer-manager/authenticated/customer/{{customerId}}" class="list-group-item list-group-item-action">{{customerName}} ({{prefecture}})</a>
                         {{/customers}}
                     </div>
+                    <br>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/customer-manager/authenticated/customer/add"
+                           class="btn btn-lg btn-outline-info">追加する</a>
+                    </div>
                 {{/customer_detail}}
                 {{#customer_detail}}
                     <table class="table">
@@ -86,6 +89,32 @@
                         <tr><th>電話番号</th><td>{{customer.customerPhone}}</td></tr>
                         <tr><th>メールアドレス</th><td>{{customer.customerMail}}</td></tr>
                     </table>
+                    <br>
+                    {{#flag_add}}
+                        <div class="d-flex flex-row bd-highlight mb-3">
+                            <div class="p-2 bd-highlight">
+                                <a href="/customer-manager/authenticated/customer/add"
+                                   class="btn btn-sm btn-outline-info">編集に戻る</a>
+                            </div>
+                            <div class="p-2 bd-highlight">
+                                <a href="/customer-manager/authenticated/customer/registry"
+                                   class="btn btn-sm btn-outline-danger">登録する</a>
+                            </div>
+                        </div>
+                    {{/flag_add}}
+                    {{^flag_add}}
+                        <div class="d-flex flex-row bd-highlight mb-3">
+                            <div class="p-2 bd-highlight">
+                                <a href="/customer-manager/authenticated/customer/add"
+                                   class="btn btn-sm btn-outline-info">注文状況確認</a>
+                            </div>
+                            <div class="p-2 bd-highlight">
+                                <a href="/customer-manager/authenticated/customer/registry"
+                                   class="btn btn-sm btn-outline-danger">注文情報追加</a>
+                            </div>
+                        </div>
+
+                    {{/flag_add}}
                 {{/customer_detail}}
             </div>
         </div>

@@ -8,18 +8,21 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import jp.wataju.*
-import jp.wataju.debug.printMessage
 import jp.wataju.model.table.Account
 import jp.wataju.model.table.Customer
 import jp.wataju.model.table.Product
-import jp.wataju.session.UserSession
+import jp.wataju.model.table.User
+import jp.wataju.registry.CustomerRegistry
+import jp.wataju.registry.RegistryPool
+import jp.wataju.registry.UserRegistry
+import jp.wataju.session.AccountSession
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.util.UUID
+import java.util.*
 
 fun Application.configureTemplating() {
 
@@ -62,7 +65,7 @@ fun Application.configureTemplating() {
                             if (query.count() == 1L) {
                                 val receive = query.first()
                                 call.sessions.set(
-                                    UserSession(
+                                    AccountSession(
                                         receive[Account.accountId],
                                         receive[Account.identify]
                                     )
@@ -153,9 +156,10 @@ fun Application.configureTemplating() {
             }
 
             route(AUTHENTICATED) {
+
                 // 検索条件
                 get("/top") {
-                    val session = call.sessions.get() ?: UserSession(null, null)
+                    val session = call.sessions.get() ?: AccountSession(null, null)
 
                     if (session.accountId != null) {
                         val model = mapOf(
@@ -173,13 +177,13 @@ fun Application.configureTemplating() {
                 // お客様情報
                 route(CUSTOMER) {
                     get("/list") {
-                        val session = call.sessions.get() ?: UserSession(null, null)
+                        val session = call.sessions.get() ?: AccountSession(null, null)
 
                         if (session.accountId != null) {
                             val customers = mutableListOf<jp.wataju.model.entity.Customer>()
                             connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                Customer.selectAll().limit(10)
+                                Customer.selectAll()
                                     .forEach {
                                         customers.add(jp.wataju.model.entity.Customer(it))
                                     }
@@ -199,15 +203,15 @@ fun Application.configureTemplating() {
                             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
                         }
                     }
-                    get("/$") {
-                        val session = call.sessions.get() ?: UserSession(null, null)
+                    get("/{customer_id}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+                        val customerId = call.parameters["customer_id"]
 
                         if (session.accountId != null) {
                             var customer: jp.wataju.model.entity.Customer? = null
                             connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                val query =
-                                    Customer.select { Customer.customerId eq UUID.fromString("7cee08fe-5fa0-456b-b969-77aae6f4481d") }
+                                val query = Customer.select { Customer.customerId eq UUID.fromString(customerId) }
                                 kotlin.runCatching {
                                     customer = jp.wataju.model.entity.Customer(query.first())
                                 }
@@ -219,10 +223,84 @@ fun Application.configureTemplating() {
                                 "identify" to session.identify,
                                 "page_message" to CUSTOMER_INFORMATION_DETAIL,
                                 "customer" to customer,
-                                "customer_detail" to true
+                                "customer_detail" to true,
+                                "flag_add" to false
                             )
 
                             call.respond(MustacheContent("customer/customer.hbs", model))
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
+                    }
+                    get("/add") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+
+                        if (session.accountId != null) {
+                            val model = mapOf(
+                                "tab_title" to TAB_TITLE,
+                                "title" to TITLE,
+                                "identify" to session.identify
+                            )
+
+                            call.respond(MustacheContent("customer/customer_edit.hbs", model))
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
+                    }
+                    post("/add/new") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+
+                        if (session.accountId != null) {
+                            val customerInfoParams = call.receiveParameters()
+
+                            RegistryPool.customerRegistry = CustomerRegistry(
+                                customerInfoParams["customer-name"] ?: "",
+                                customerInfoParams["customer-name-kana"] ?: "",
+                                customerInfoParams["zipcode"] ?: "",
+                                customerInfoParams["prefecture"] ?: "",
+                                customerInfoParams["address-1"] ?: "",
+                                customerInfoParams["address-2"] ?: "",
+                                customerInfoParams["address-3"] ?: "",
+                                customerInfoParams["customer-phone"] ?: "",
+                                customerInfoParams["customer-mail"] ?: ""
+                            )
+
+                            val model = mapOf(
+                                "tab_title" to TAB_TITLE,
+                                "title" to TITLE,
+                                "identify" to session.identify,
+                                "page_message" to EDIT_AND_REGISTRY,
+                                "customer" to RegistryPool.customerRegistry,
+                                "customer_detail" to true,
+                                "flag_add" to true
+                            )
+
+                            call.respond(MustacheContent("customer/customer.hbs", model))
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
+                    }
+                    get("/registry") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+
+                        if ( session.accountId != null ) {
+                            val customerPool = RegistryPool.customerRegistry
+                            connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
+                            transaction {
+                                Customer.insert {
+                                    it[customerName] = customerPool.customerName
+                                    it[customerNameKana] = customerPool.customerNameKana
+                                    it[zipcode] = customerPool.zipcode
+                                    it[prefecture] = customerPool.prefecture
+                                    it[address1] = customerPool.address1
+                                    it[address2] = customerPool.address2
+                                    it[address3] = customerPool.address3
+                                    it[customerPhone] = customerPool.customerPhone
+                                    it[customerMail] = customerPool.customerMail
+                                }
+                            }
+
+                            call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
                         } else {
                             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
                         }
@@ -232,13 +310,13 @@ fun Application.configureTemplating() {
                 // 商品情報
                 route(PRODUCT) {
                     get("/list") {
-                        val session = call.sessions.get() ?: UserSession(null, null)
+                        val session = call.sessions.get() ?: AccountSession(null, null)
 
                         if (session.accountId != null) {
                             val products = mutableListOf<jp.wataju.model.entity.Product>()
                             connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                Product.selectAll().limit(10)
+                                Product.selectAll()
                                     .forEach {
                                         products.add(jp.wataju.model.entity.Product(it))
                                     }
@@ -258,15 +336,15 @@ fun Application.configureTemplating() {
                             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
                         }
                     }
-                    get("/$") {
-                        val session = call.sessions.get() ?: UserSession(null, null)
+                    get("/{product_id}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+                        val productId = call.parameters["product_id"]
 
                         if (session.accountId != null) {
                             var product: jp.wataju.model.entity.Product? = null
                             connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                val query =
-                                    Product.select { Product.productId eq UUID.fromString("6d1a4380-83d9-404b-9b14-6557a506f3fc") }
+                                val query = Product.select { Product.productId eq UUID.fromString(productId) }
                                 kotlin.runCatching {
                                     product = jp.wataju.model.entity.Product(query.first())
                                 }
@@ -290,8 +368,9 @@ fun Application.configureTemplating() {
 
                 // ユーザ設定
                 route(SETTING) {
-                    get("/ken") {
-                        val session = call.sessions.get() ?: UserSession(null, null)
+                    get("/{identify}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+                        call.parameters["identify"]
 
                         if (session.accountId != null) {
                             val model = mapOf(
@@ -306,23 +385,27 @@ fun Application.configureTemplating() {
                             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
                         }
                     }
-                    post("/registry-confirm") {
-                        val session = call.sessions.get() ?: UserSession(null, null)
+                    post("/confirm/{identify}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+                        call.parameters["identify"]
 
                         if (session.accountId != null) {
-                            val userSettingParams = call.receiveParameters()
-                            val userName = userSettingParams["user-name"] ?: ""
-                            val userNameKana = userSettingParams["user-name-kana"] ?: ""
-                            val userPhone = userSettingParams["user-phone"] ?: ""
-                            val userMail = userSettingParams["user-mail"] ?: ""
+                            val userInfoParams = call.receiveParameters()
 
-                            if (userName != "") {
+                            if (userInfoParams["user-name"] != "") {
+                                RegistryPool.userRegistry = UserRegistry(
+                                    userInfoParams["user-name"] ?: "",
+                                    userInfoParams["user-name-kana"] ?: "",
+                                    userInfoParams["user-phone"] ?: "",
+                                    userInfoParams["user-mail"] ?: ""
+                                )
 
+                                val userRegistries = RegistryPool.userRegistry
                                 val data = arrayOf(
-                                    mapOf("label" to "ユーザ名", "element" to userName),
-                                    mapOf("label" to "ユーザ名（カナ）", "element" to userNameKana),
-                                    mapOf("label" to "電話番号", "element" to userPhone),
-                                    mapOf("label" to "メールアドレス", "element" to userMail)
+                                    mapOf("label" to "ユーザ名", "element" to userRegistries.userName),
+                                    mapOf("label" to "ユーザ名（カナ）", "element" to userRegistries.userNameKana),
+                                    mapOf("label" to "電話番号", "element" to userRegistries.userPhone),
+                                    mapOf("label" to "メールアドレス", "element" to userRegistries.userMail)
                                 )
 
                                 val model = mapOf(
@@ -350,6 +433,59 @@ fun Application.configureTemplating() {
                             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
                         }
 
+                    }
+                    get("/registry/{identify}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+                        call.parameters["identify"]
+
+                        if (session.accountId != null) {
+                            var user: jp.wataju.model.entity.User? = null
+                            connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
+                            transaction {
+                                val query = User.select { User.accountId eq session.accountId!! }
+                                kotlin.runCatching {
+                                    user = jp.wataju.model.entity.User(query.first())
+                                }
+                            }
+
+                            val userPool = RegistryPool.userRegistry
+                            if (user?.accountId != session.accountId) {
+
+                                connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
+                                transaction {
+                                    User.insert {
+                                        it[accountId] = session.accountId!!
+                                        it[userName] = userPool.userName
+                                        it[userNameKana] = userPool.userNameKana
+                                        it[userPhone] = userPool.userPhone
+                                        it[userMail] = userPool.userMail
+                                    }
+                                }
+
+                                call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
+                            } else {
+                                val data = arrayOf(
+                                    mapOf("label" to "ユーザ名", "element" to userPool.userName),
+                                    mapOf("label" to "ユーザ名（カナ）", "element" to userPool.userNameKana),
+                                    mapOf("label" to "電話番号", "element" to userPool.userPhone),
+                                    mapOf("label" to "メールアドレス", "element" to userPool.userMail)
+                                )
+
+                                val model = mapOf(
+                                    "tab_title" to TAB_TITLE,
+                                    "title" to TITLE,
+                                    "identify" to session.identify,
+                                    "message_alert" to false,
+                                    "message" to ALREADY_REGISTRY_USER,
+                                    "user_data" to data,
+                                    "flag_confirm" to true,
+                                )
+
+                                call.respond(MustacheContent("setting/setting.hbs", model))
+                            }
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
                     }
                 }
 
