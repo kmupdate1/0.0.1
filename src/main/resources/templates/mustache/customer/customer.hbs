@@ -19,7 +19,7 @@
 
         <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/top">{{title}}</a>
+                <a class="navbar-brand" href="/customer-manager/authenticated/top">{{title}}</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -47,7 +47,7 @@
                         <div class="d-flex flex-row bd-highlight mb-3">
                             <div class="p-2 bd-highlight">
                                 <h5>
-                                    <a href="/setting">こんにちは、{{identify}}さん</a>
+                                    <a href="/customer-manager/authenticated/setting/{{identify}}">こんにちは、{{identify}}さん</a>
                                 </h5>
                             </div>
                         </div>
@@ -56,7 +56,7 @@
                         <div class="d-flex flex-row-reverse bd-highlight">
                             <div class="p-2 bd-highlight">
                                 <button class="btn btn-outline-primary" type="button">
-                                    <a href="/logout">ログアウト</a>
+                                    <a href="/customer-manager/unauthenticated/logout">ログアウト</a>
                                 </button>
                             </div>
                         </div>
@@ -70,7 +70,7 @@
                 {{^customer_detail}}
                     <div class="list-group">
                         {{#customers}}
-                            <a href="/customer-detail-{{customerId}}" class="list-group-item list-group-item-action">{{customerName}} ({{prefecture}})</a>
+                            <a href="/customer-manager/authenticated/customer/{{customerId}}" class="list-group-item list-group-item-action">{{customerName}} ({{prefecture}})</a>
                         {{/customers}}
                     </div>
                 {{/customer_detail}}

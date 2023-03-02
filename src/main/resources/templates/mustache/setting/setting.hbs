@@ -19,7 +19,7 @@
 
         <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/top">{{title}}</a>
+                <a class="navbar-brand" href="/customer-manager/authenticated/top">{{title}}</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -54,7 +54,7 @@
                         <div class="d-flex flex-row-reverse bd-highlight">
                             <div class="p-2 bd-highlight">
                                 <button class="btn btn-outline-primary" type="button">
-                                    <a href="/logout">ログアウト</a>
+                                    <a href="/customer-manager/unauthenticated/logout">ログアウト</a>
                                 </button>
                             </div>
                         </div>
@@ -65,7 +65,7 @@
             <br>
             {{^flag_confirm}}
                 <div>
-                    <form method="post" action="/registry-confirm">
+                    <form method="post" action="/customer-manager/authenticated/setting/registry-confirm">
                         <div class="form-group">
                             <label for="user-name">ユーザ名</label>
                             <input class="form-control" type="text" name="user-name" id="user-name">

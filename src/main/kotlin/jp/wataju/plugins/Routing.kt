@@ -8,17 +8,27 @@ import io.ktor.server.sessions.*
 
 fun Application.configureRouting() {
     routing {
-        get("/login") {
-            call.respondRedirect("/login")
+
+        get(ROOT_PATH) {
+            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
         }
 
-        get("/top") {
-            call.respondRedirect("/search-condition")
+        route(CUSTOMER_MANAGER) {
+            route(UNAUTHENTICATED) {
+                get("/logout") {
+                    call.sessions.set(UserSession(null, null))
+                    call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                }
+            }
         }
 
-        get("/logout") {
-            call.sessions.set(UserSession(null, null))
-            call.respondRedirect("/login")
-        }
     }
 }
+
+const val ROOT_PATH = "/"
+const val CUSTOMER_MANAGER = "/customer-manager"
+const val UNAUTHENTICATED = "/unauthenticated"
+const val AUTHENTICATED = "/authenticated"
+const val CUSTOMER = "/customer"
+const val PRODUCT = "/product"
+const val SETTING = "/setting"

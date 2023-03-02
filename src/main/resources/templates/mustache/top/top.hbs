@@ -48,7 +48,7 @@
                         <div class="d-flex flex-row bd-highlight mb-3">
                             <div class="p-2 bd-highlight">
                                 <h5>
-                                    <a href="/setting">こんにちは、{{identify}}さん</a>
+                                    <a href="/customer-manager/authenticated/setting/{{identify}}">こんにちは、{{identify}}さん</a>
                                 </h5>
                             </div>
                         </div>
@@ -57,7 +57,7 @@
                         <div class="d-flex flex-row-reverse bd-highlight">
                             <div class="p-2 bd-highlight">
                                 <button class="btn btn-outline-primary" type="button">
-                                    <a href="/logout">ログアウト</a>
+                                    <a href="/customer-manager/unauthenticated/logout">ログアウト</a>
                                 </button>
                             </div>
                         </div>
@@ -70,10 +70,10 @@
                 <h3 class="d-flex justify-content-center">お客様</h3>
                 <div class="d-grid gap-2">
                     <button class="btn btn-link" type="button">
-                        <a href="/customer-list">お客様情報を確認する</a>
+                        <a href="/customer-manager/authenticated/customer/list">お客様情報を確認する</a>
                     </button>
                     <button class="btn btn-link" type="button">
-                        <a href="/customer-order">お客様の注文状況を確認する</a>
+                        <a href="/customer-manager/authenticated/customer/order">お客様の注文状況を確認する</a>
                     </button>
                 </div>
             </div>
@@ -82,10 +82,10 @@
                 <h3 class="d-flex justify-content-center">商品</h3>
                 <div class="d-grid gap-2">
                     <button class="btn btn-link" type="button">
-                        <a href="/product-list">商品の情報を確認する</a>
+                        <a href="/customer-manager/authenticated/product/list">商品の情報を確認する</a>
                     </button>
                     <button class="btn btn-link" type="button">
-                        <a href="/product-order">商品の注文状況を確認する</a>
+                        <a href="/customer-manager/authenticated/product/order">商品の注文状況を確認する</a>
                     </button>
                 </div>
             </div>
