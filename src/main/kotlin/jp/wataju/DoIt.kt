@@ -4,7 +4,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 fun main() {
 
-    connect(PLATFORM_WINDOWS, CUSTOMER_MANAGEMENT_SYSTEM)
+    connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
     transaction {
 
         /*
@@ -12,8 +12,9 @@ fun main() {
         SchemaUtils.create(User)
         SchemaUtils.create(Customer)
         SchemaUtils.create(Product)
+        SchemaUtils.drop(Order)
         SchemaUtils.create(Order)
-         */
+        */
 
         // Account.deleteAll()
         // User.deleteAll()

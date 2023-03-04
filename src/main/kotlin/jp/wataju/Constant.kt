@@ -12,6 +12,7 @@ const val CUSTOMER_INFORMATION_LIST = "お客様一覧"
 const val CUSTOMER_INFORMATION_DETAIL = "お客様情報詳細"
 const val PRODUCT_INFORMATION_LIST = "商品一覧"
 const val PRODUCT_INFORMATION_DETAIL = "商品情報詳細"
+const val ADD_ORDER_BY_CUSTOMER = "お客様の注文状況を追加します"
 const val EDIT_AND_REGISTRY = "この内容で編集・登録しますか？"
 const val ALREADY_REGISTRY_USER = "既に登録されています"
 

@@ -1,5 +1,8 @@
 package jp.wataju.registry
 
+import com.google.gson.Gson
+import java.util.*
+
 data class UserRegistry(
     val userName: String,
     val userNameKana: String,
@@ -8,13 +11,21 @@ data class UserRegistry(
 )
 
 data class CustomerRegistry (
-    var customerName: String,
-    var customerNameKana: String,
-    var zipcode: String,
-    var prefecture: String,
-    var address1: String,
-    var address2: String,
-    var address3: String,
-    var customerPhone: String,
-    var customerMail: String
+    val customerName: String,
+    val customerNameKana: String,
+    val zipcode: String,
+    val prefecture: String,
+    val address1: String,
+    val address2: String,
+    val address3: String,
+    val customerPhone: String,
+    val customerMail: String
 )
+
+data class OrderRegistry (
+    val customerId: UUID,
+    val orders: MutableMap<UUID, Int>,
+    val orderDate: String
+) {
+    fun getPurchaseInfoJSON(): String = Gson().toJson(orders)
+}

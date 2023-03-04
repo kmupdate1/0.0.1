@@ -105,15 +105,14 @@
                     {{^flag_add}}
                         <div class="d-flex flex-row bd-highlight mb-3">
                             <div class="p-2 bd-highlight">
-                                <a href="/customer-manager/authenticated/customer/add"
+                                <a href="/customer-manager/authenticated/order/{{customer.customerId}}"
                                    class="btn btn-sm btn-outline-info">注文状況確認</a>
                             </div>
                             <div class="p-2 bd-highlight">
-                                <a href="/customer-manager/authenticated/customer/registry"
+                                <a href="/customer-manager/authenticated/order/edit/{{customer.customerId}}"
                                    class="btn btn-sm btn-outline-danger">注文情報追加</a>
                             </div>
                         </div>
-
                     {{/flag_add}}
                 {{/customer_detail}}
             </div>

@@ -6,6 +6,6 @@ import org.jetbrains.exposed.sql.ResultRow
 class Order(resultRow: ResultRow) {
     val orderId = resultRow[Order.orderId]
     val customerId = resultRow[Order.customerId]
-    val productId = resultRow[Order.productId]
+    val productId = resultRow[Order.products]
     val orderDate = resultRow[Order.orderDate]
 }

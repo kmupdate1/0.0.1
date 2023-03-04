@@ -3,6 +3,8 @@ val kotlin_version: String by project
 val logback_version: String by project
 val exposed_version: String by project
 val sqlite_version: String by project
+val gson_version: String by project
+val serialization_version: String by project
 
 plugins {
     kotlin("jvm") version "1.8.10"
@@ -31,10 +33,13 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:$logback_version")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serialization_version")
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("org.xerial:sqlite-jdbc:$sqlite_version")
+
+    implementation("com.google.code.gson:gson:$gson_version")
 
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
