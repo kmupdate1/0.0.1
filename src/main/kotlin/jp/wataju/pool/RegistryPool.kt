@@ -1,4 +1,4 @@
-package jp.wataju.registry
+package jp.wataju.pool
 
 object RegistryPool {
     lateinit var userRegistry: UserRegistry

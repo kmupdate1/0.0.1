@@ -139,6 +139,18 @@
                             <tr><th>購入日</th><td>{{order_date}}</td></tr>
                         </tbody>
                     </table>
+                    <br>
+                    <div class="d-flex flex-row bd-highlight mb-3">
+                        <div class="p-2 bd-highlight">
+                            <a href="/customer-manager/authenticated/order/edit/{{customer.customerId}}"
+                               class="btn btn-sm btn-outline-info">編集に戻る</a>
+                        </div>
+                        <div class="p-2 bd-highlight">
+                            <a href="/customer-manager/authenticated/order/registry/{{customer.customerId}}"
+                               class="btn btn-sm btn-outline-danger">登録する</a>
+                        </div>
+                    </div>
+
                 {{/flag_confirm}}
                 <br>
             </div>

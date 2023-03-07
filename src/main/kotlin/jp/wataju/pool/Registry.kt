@@ -1,4 +1,4 @@
-package jp.wataju.registry
+package jp.wataju.pool
 
 import com.google.gson.Gson
 import java.util.*

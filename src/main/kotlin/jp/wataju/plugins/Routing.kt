@@ -15,13 +15,7 @@ fun Application.configureRouting() {
             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
         }
 
-        // ログアウト後のブラウザバック対応
-        get("$CUSTOMER_MANAGER$AUTHENTICATED/login") {
-            call.sessions.set(AccountSession(null, null))
-            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
-        }
-
-        // ログアウト押下
+        // ログアウト
         get("/logout") {
             call.sessions.set(AccountSession(null, null))
             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")

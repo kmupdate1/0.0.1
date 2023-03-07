@@ -1,6 +1,7 @@
 package jp.wataju.plugins
 
 import com.github.mustachejava.DefaultMustacheFactory
+import com.google.gson.Gson
 import io.ktor.server.application.*
 import io.ktor.server.mustache.*
 import io.ktor.server.request.*
@@ -8,14 +9,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import jp.wataju.*
-import jp.wataju.model.table.Account
-import jp.wataju.model.table.Customer
-import jp.wataju.model.table.Product
-import jp.wataju.model.table.User
-import jp.wataju.registry.CustomerRegistry
-import jp.wataju.registry.OrderRegistry
-import jp.wataju.registry.RegistryPool
-import jp.wataju.registry.UserRegistry
+import jp.wataju.model.table.*
+import jp.wataju.pool.*
 import jp.wataju.session.AccountSession
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
@@ -371,6 +366,67 @@ fun Application.configureTemplating() {
                 route(ORDER) {
 
                     // お客様
+                    get("/{customer_id}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+
+                        if ( session.accountId != null) {
+
+                            val customerId = call.parameters["customer_id"]
+                            var customer: jp.wataju.model.entity.Customer? = null
+
+                            SearchPool.orders.clear()
+                            connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
+                            transaction {
+                                val query = Customer.select { Customer.customerId eq UUID.fromString(customerId) }
+                                customer = jp.wataju.model.entity.Customer(query.first())
+
+                                Order.selectAll().forEach {
+                                    SearchPool.orders.add(jp.wataju.model.entity.Order(it))
+                                }
+                            }
+
+                            val model = mapOf(
+                                "tab_title" to TAB_TITLE,
+                                "title" to TITLE,
+                                "identify" to session.identify,
+                                "page_message" to DISPLAY_ORDER_BY_CUSTOMER,
+                                "customer" to customer,
+                                "data_list" to SearchPool.orders,
+                                "flag_list" to true
+                            )
+
+                            call.respond(MustacheContent("order/order.hbs", model))
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
+                    }
+                    get("/{customer_id}/{order_id}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+
+                        if ( session.accountId != null) {
+
+                            val customerId = UUID.fromString(call.parameters["customer_id"])
+                            var customer: jp.wataju.model.entity.Customer? = null
+                            connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
+                            transaction {
+                                val query = Customer.select { Customer.customerId eq customerId }
+                                customer = jp.wataju.model.entity.Customer(query.first())
+                            }
+
+                            val model = mapOf(
+                                "tab_title" to TAB_TITLE,
+                                "title" to TITLE,
+                                "identify" to session.identify,
+                                "page_message" to DISPLAY_ORDER_BY_CUSTOMER,
+                                "customer" to customer,
+                                "data_list" to SearchPool.orders,
+                                "flag_list" to false
+                            )
+                            call.respond(MustacheContent("order/order.hbs", model))
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
+                    }
                     get("/edit/{customer_id}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
 
@@ -469,6 +525,31 @@ fun Application.configureTemplating() {
                             } else {
                                 call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED$ORDER/edit/$customerId")
                             }
+                        } else {
+                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                        }
+                    }
+                    get("/registry/{customer_id}") {
+                        val session = call.sessions.get() ?: AccountSession(null, null)
+
+                        if ( session.accountId != null) {
+
+                            val orderRegistry = RegistryPool.orderRegistry
+                            val customerId =  UUID.fromString(call.parameters["customer_id"])
+                            val products = Gson().toJson(orderRegistry.orders)
+                            val orderDate = orderRegistry.orderDate
+
+                            // データベース登録
+                            connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
+                            transaction {
+                                Order.insert {
+                                    it[Order.customerId] = customerId
+                                    it[Order.products] = products
+                                    it[Order.orderDate] = orderDate
+                                }
+                            }
+
+                            call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
                         } else {
                             call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
                         }

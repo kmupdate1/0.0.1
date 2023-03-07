@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+    <head>
+        <meta charset="UTF-8">
+        <link rel="icon" type="image/jpg" href="/image/icon/wataju_logo.jpg" sizes="16x16 24x24 32x32 48x48 64x64">
+        <title>{{tab_title}}</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+              rel="stylesheet"
+              integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+              crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+                integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+                crossorigin="anonymous">
+        </script>
+    </head>
+
+    <body>
+
+        <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/customer-manager/authenticated/top">{{title}}</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarText">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="#">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Features</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Pricing</a>
+                        </li>
+                    </ul>
+                    <span class="navbar-text">Navbar text with an inline element</span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <div class="alert alert-primary">
+                <div class="row">
+                    <div class="col order-first">
+                        <div class="d-flex flex-row bd-highlight mb-3">
+                            <div class="p-2 bd-highlight">
+                                <h5>
+                                    <a href="/customer-manager/authenticated/setting/{{identify}}">こんにちは、{{identify}}さん</a>
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col order-last">
+                        <div class="d-flex flex-row-reverse bd-highlight">
+                            <div class="p-2 bd-highlight">
+                                <a href="/logout" class="btn btn-outline-primary btn-sm">ログアウト</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <div>
+                <h5>{{page_message}}</h5>
+                <br>
+                <h2>{{customer.customerName}}</h2>
+                <br>
+                <div class="d-flex flex-row bd-highlight mb-3">
+                    <div class="p-2 bd-highlight">
+                        <a href="/customer-manager/authenticated/order/edit/{{customer.customerId}}"
+                           class="btn btn-sm btn-outline-danger">注文情報追加</a>
+                    </div>
+                </div>
+                {{#flag_list}}
+                    <div class="list-group">
+                        {{#data_list}}
+                            <a href="/customer-manager/authenticated/{{customer.customerId}}/{{orderId}}"
+                               class="list-group-item list-group-item-action">
+                                {{orderDate}}
+                            </a>
+                        {{/data_list}}
+                    </div>
+                {{/flag_list}}
+                {{^flag_list}}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>商品名</th>
+                                <th>本数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th></th>
+                            </tr>
+                        </tbody>
+                    </table>
+                {{/flag_list}}
+                <br>
+            </div>
+        </div>
+
+    </body>
+
+</html>
