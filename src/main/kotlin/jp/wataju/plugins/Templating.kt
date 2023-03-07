@@ -28,9 +28,10 @@ fun Application.configureTemplating() {
 
     routing {
 
-        route(CUSTOMER_MANAGER) {
+        route(WATAJU) {
 
-            route(UNAUTHENTICATED) {
+            route(CUSTOMER_MANAGER) {
+
                 // ログイン
                 get("/login") {
                     val model = mapOf(
@@ -72,7 +73,7 @@ fun Application.configureTemplating() {
                     }
 
                     if (accountExists) {
-                        call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
+                        call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
                     } else {
                         val model = mapOf(
                             "tab_title" to TAB_TITLE,
@@ -145,13 +146,10 @@ fun Application.configureTemplating() {
                             }
 
                             // ログイン画面へリダイレクト
-                            call.respondRedirect("$CUSTOMER_MANAGER/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                 }
-            }
-
-            route(AUTHENTICATED) {
 
                 // 検索条件
                 get("/top") {
@@ -166,7 +164,7 @@ fun Application.configureTemplating() {
 
                         call.respond(MustacheContent("top/top.hbs", model))
                     } else {
-                        call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/login")
+                        call.respondRedirect(REDIRECT)
                     }
                 }
 
@@ -196,7 +194,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/login")
                         }
                     }
                     get("/{customer_id}") {
@@ -225,7 +223,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     get("/add") {
@@ -240,7 +238,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer_edit.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     post("/add/new") {
@@ -273,7 +271,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     get("/registry") {
@@ -296,9 +294,9 @@ fun Application.configureTemplating() {
                                 }
                             }
 
-                            call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
+                            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                 }
@@ -329,7 +327,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("product/product.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     get("/{product_id}") {
@@ -357,7 +355,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("product/product.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                 }
@@ -397,7 +395,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("order/order.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     get("/{customer_id}/{order_id}") {
@@ -424,7 +422,7 @@ fun Application.configureTemplating() {
                             )
                             call.respond(MustacheContent("order/order.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     get("/edit/{customer_id}") {
@@ -461,7 +459,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("order/order_customer.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     post("/confirm/{customer_id}") {
@@ -523,10 +521,10 @@ fun Application.configureTemplating() {
 
                                 call.respond(MustacheContent("order/order_customer.hbs", model))
                             } else {
-                                call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED$ORDER/edit/$customerId")
+                                call.respondRedirect("$WATAJU$CUSTOMER_MANAGER$ORDER/edit/$customerId")
                             }
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     get("/registry/{customer_id}") {
@@ -549,9 +547,9 @@ fun Application.configureTemplating() {
                                 }
                             }
 
-                            call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
+                            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
 
@@ -573,7 +571,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("setting/setting.hbs", model))
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                     post("/confirm/{identify}") {
@@ -621,7 +619,7 @@ fun Application.configureTemplating() {
                                 call.respond(MustacheContent("setting/setting.hbs", model))
                             }
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
 
                     }
@@ -653,7 +651,7 @@ fun Application.configureTemplating() {
                                     }
                                 }
 
-                                call.respondRedirect("$CUSTOMER_MANAGER$AUTHENTICATED/top")
+                                call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
                             } else {
                                 val data = arrayOf(
                                     mapOf("label" to "ユーザ名", "element" to userPool.userName),
@@ -675,7 +673,7 @@ fun Application.configureTemplating() {
                                 call.respond(MustacheContent("setting/setting.hbs", model))
                             }
                         } else {
-                            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+                            call.respondRedirect(REDIRECT)
                         }
                     }
                 }

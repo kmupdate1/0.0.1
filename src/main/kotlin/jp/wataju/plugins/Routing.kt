@@ -12,13 +12,13 @@ fun Application.configureRouting() {
 
         // ドメインアクセス時のリダイレクト
         get(ROOT_PATH) {
-            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/login")
         }
 
         // ログアウト
         get("/logout") {
             call.sessions.set(AccountSession(null, null))
-            call.respondRedirect("$CUSTOMER_MANAGER$UNAUTHENTICATED/login")
+            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/login")
         }
 
     }
@@ -26,10 +26,10 @@ fun Application.configureRouting() {
 }
 
 const val ROOT_PATH = "/"
-const val CUSTOMER_MANAGER = "/customer-manager"
-const val UNAUTHENTICATED = "/unauthenticated"
-const val AUTHENTICATED = "/authenticated"
+const val WATAJU = "/wataju"
+const val CUSTOMER_MANAGER = "/customer_manager"
 const val CUSTOMER = "/customer"
 const val PRODUCT = "/product"
 const val ORDER = "/order"
 const val SETTING = "/setting"
+const val REDIRECT = "$WATAJU$CUSTOMER_MANAGER/login"
