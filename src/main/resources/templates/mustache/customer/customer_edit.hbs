@@ -19,7 +19,7 @@
 
         <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/customer-manager/authenticated/top">{{title}}</a>
+                <a class="navbar-brand" href="/wataju/customer_manager/top">{{title}}</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -47,7 +47,7 @@
                         <div class="d-flex flex-row bd-highlight mb-3">
                             <div class="p-2 bd-highlight">
                                 <h5>
-                                    <a href="/customer-manager/authenticated/setting/{{identify}}">こんにちは、{{identify}}さん</a>
+                                    <a href="/wataju/customer_manager/setting/{{identify}}">こんにちは、{{identify}}さん</a>
                                 </h5>
                             </div>
                         </div>
@@ -66,7 +66,7 @@
                 <h5>{{page_message}}</h5>
                 <br>
                 <div>
-                    <form method="post" action="/customer-manager/authenticated/customer/add/new">
+                    <form method="post" action="/wataju/customer_manager/customer/add/new">
                         <div class="form-group">
                             <label for="customer-name">お客様名</label>
                             <input class="form-control" type="text" name="customer-name" id="customer-name">
