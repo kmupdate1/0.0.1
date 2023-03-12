@@ -1,7 +1,6 @@
 package jp.wataju.plugins
 
 import com.github.mustachejava.DefaultMustacheFactory
-import com.google.gson.Gson
 import io.ktor.server.application.*
 import io.ktor.server.mustache.*
 import io.ktor.server.request.*
@@ -9,9 +8,16 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import jp.wataju.*
+import jp.wataju.deserialize.ProductOrder
 import jp.wataju.model.table.*
-import jp.wataju.pool.*
+import jp.wataju.pool.CustomerRegistry
+import jp.wataju.pool.OrderRegistry
+import jp.wataju.pool.RegistryPool
+import jp.wataju.pool.UserRegistry
 import jp.wataju.session.AccountSession
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
@@ -146,7 +152,7 @@ fun Application.configureTemplating() {
                             }
 
                             // ログイン画面へリダイレクト
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                 }
@@ -164,7 +170,7 @@ fun Application.configureTemplating() {
 
                         call.respond(MustacheContent("top/top.hbs", model))
                     } else {
-                        call.respondRedirect(REDIRECT)
+                        call.respondRedirect(REDIRECT_TO_LOGIN)
                     }
                 }
 
@@ -223,7 +229,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     get("/add") {
@@ -238,7 +244,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer_edit.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     post("/add/new") {
@@ -271,7 +277,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("customer/customer.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     get("/registry") {
@@ -296,7 +302,7 @@ fun Application.configureTemplating() {
 
                             call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                 }
@@ -327,7 +333,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("product/product.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     get("/{product_id}") {
@@ -355,7 +361,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("product/product.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                 }
@@ -369,17 +375,18 @@ fun Application.configureTemplating() {
 
                         if ( session.accountId != null) {
 
-                            val customerId = call.parameters["customer_id"]
-                            var customer: jp.wataju.model.entity.Customer? = null
+                            val customerId = UUID.fromString(call.parameters["customer_id"])
 
-                            SearchPool.orders.clear()
+                            var customer: jp.wataju.model.entity.Customer? = null
+                            val orders = arrayListOf<jp.wataju.model.entity.Order>()
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                val query = Customer.select { Customer.customerId eq UUID.fromString(customerId) }
+                                val query = Customer.select { Customer.customerId eq customerId }
                                 customer = jp.wataju.model.entity.Customer(query.first())
 
-                                Order.selectAll().forEach {
-                                    SearchPool.orders.add(jp.wataju.model.entity.Order(it))
+                                Order.select { Order.customerId eq customerId }
+                                    .forEach {
+                                    orders.add(jp.wataju.model.entity.Order(it))
                                 }
                             }
 
@@ -389,13 +396,13 @@ fun Application.configureTemplating() {
                                 "identify" to session.identify,
                                 "page_message" to DISPLAY_ORDER_BY_CUSTOMER,
                                 "customer" to customer,
-                                "data_list" to SearchPool.orders,
+                                "data_list" to orders,
                                 "flag_list" to true
                             )
 
                             call.respond(MustacheContent("order/order.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     get("/{customer_id}/{order_id}") {
@@ -404,25 +411,55 @@ fun Application.configureTemplating() {
                         if ( session.accountId != null) {
 
                             val customerId = UUID.fromString(call.parameters["customer_id"])
+                            val orderId    = UUID.fromString(call.parameters["order_id"])
+
                             var customer: jp.wataju.model.entity.Customer? = null
+                            var order: jp.wataju.model.entity.Order
+                            var product: jp.wataju.model.entity.Product?
+
+                            val data = arrayListOf<Map<String, Any>>()
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
                                 val query = Customer.select { Customer.customerId eq customerId }
                                 customer = jp.wataju.model.entity.Customer(query.first())
-                            }
 
+                                // orderIDを元に注文した商品と個数を検索（JSON）
+                                val orderQuery = Order.select { Order.orderId eq orderId }
+                                order = jp.wataju.model.entity.Order(orderQuery.first())
+
+                                // JSONをデシリアライズ
+                                val obj = Json.decodeFromString(ListSerializer(ProductOrder.serializer()), order.products)
+
+                                // 取得した商品IDを元に商品名を検索
+                                obj.forEach {
+                                    if (it.number != 0) {
+                                        val productQuery =
+                                            Product.select { Product.productId eq UUID.fromString(it.productId) }
+                                        product = jp.wataju.model.entity.Product(productQuery.first())
+
+                                        // 表示用リスト化
+                                        data.add(
+                                            mapOf(
+                                                "product_name" to product!!.productName,
+                                                "product_number" to it.number
+                                            )
+                                        )
+                                    }
+                                }
+
+                            }
                             val model = mapOf(
                                 "tab_title" to TAB_TITLE,
                                 "title" to TITLE,
                                 "identify" to session.identify,
                                 "page_message" to DISPLAY_ORDER_BY_CUSTOMER,
                                 "customer" to customer,
-                                "data_list" to SearchPool.orders,
+                                "order_data" to data,
                                 "flag_list" to false
                             )
                             call.respond(MustacheContent("order/order.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     get("/edit/{customer_id}") {
@@ -459,7 +496,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("order/order_customer.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     post("/confirm/{customer_id}") {
@@ -524,7 +561,7 @@ fun Application.configureTemplating() {
                                 call.respondRedirect("$WATAJU$CUSTOMER_MANAGER$ORDER/edit/$customerId")
                             }
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     get("/registry/{customer_id}") {
@@ -533,9 +570,14 @@ fun Application.configureTemplating() {
                         if ( session.accountId != null) {
 
                             val orderRegistry = RegistryPool.orderRegistry
-                            val customerId =  UUID.fromString(call.parameters["customer_id"])
-                            val products = Gson().toJson(orderRegistry.orders)
+                            val customerId = UUID.fromString(call.parameters["customer_id"])
                             val orderDate = orderRegistry.orderDate
+
+                            val list = arrayListOf<ProductOrder>()
+                            RegistryPool.orderRegistry.orders.forEach {
+                                list.add(ProductOrder(it.key.toString(), it.value))
+                            }
+                            val products = Json.encodeToString(list)
 
                             // データベース登録
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
@@ -549,7 +591,7 @@ fun Application.configureTemplating() {
 
                             call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
 
@@ -571,7 +613,7 @@ fun Application.configureTemplating() {
 
                             call.respond(MustacheContent("setting/setting.hbs", model))
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                     post("/confirm/{identify}") {
@@ -619,7 +661,7 @@ fun Application.configureTemplating() {
                                 call.respond(MustacheContent("setting/setting.hbs", model))
                             }
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
 
                     }
@@ -673,7 +715,7 @@ fun Application.configureTemplating() {
                                 call.respond(MustacheContent("setting/setting.hbs", model))
                             }
                         } else {
-                            call.respondRedirect(REDIRECT)
+                            call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
                     }
                 }

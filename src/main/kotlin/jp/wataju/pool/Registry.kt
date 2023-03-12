@@ -1,6 +1,5 @@
 package jp.wataju.pool
 
-import com.google.gson.Gson
 import java.util.*
 
 data class UserRegistry(
@@ -26,6 +25,4 @@ data class OrderRegistry (
     val customerId: UUID,
     val orders: MutableMap<UUID, Int>,
     val orderDate: String
-) {
-    fun getPurchaseInfoJSON(): String = Gson().toJson(orders)
-}
+)

@@ -11,25 +11,24 @@ fun Application.configureRouting() {
     routing {
 
         // ドメインアクセス時のリダイレクト
-        get(ROOT_PATH) {
-            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/login")
+        get("/") {
+            call.respondRedirect(REDIRECT_TO_LOGIN)
         }
 
         // ログアウト
         get("/logout") {
             call.sessions.set(AccountSession(null, null))
-            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/login")
+            call.respondRedirect(REDIRECT_TO_LOGIN)
         }
 
     }
 
 }
 
-const val ROOT_PATH = "/"
 const val WATAJU = "/wataju"
 const val CUSTOMER_MANAGER = "/customer_manager"
 const val CUSTOMER = "/customer"
 const val PRODUCT = "/product"
 const val ORDER = "/order"
 const val SETTING = "/setting"
-const val REDIRECT = "$WATAJU$CUSTOMER_MANAGER/login"
+const val REDIRECT_TO_LOGIN = "$WATAJU$CUSTOMER_MANAGER/login"

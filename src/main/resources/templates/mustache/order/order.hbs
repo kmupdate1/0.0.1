@@ -76,7 +76,7 @@
                 {{#flag_list}}
                     <div class="list-group">
                         {{#data_list}}
-                            <a href="/wataju/customer_manager/{{customer.customerId}}/{{orderId}}"
+                            <a href="/wataju/customer_manager/order/{{customer.customerId}}/{{orderId}}"
                                class="list-group-item list-group-item-action">
                                 {{orderDate}}
                             </a>
@@ -84,17 +84,20 @@
                     </div>
                 {{/flag_list}}
                 {{^flag_list}}
-                    <table>
+                    <table class="table">
                         <thead>
                             <tr>
-                                <th>商品名</th>
-                                <th>本数</th>
+                                <th scope="col">商品名</th>
+                                <th scope="col">本数</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <th></th>
-                            </tr>
+                            {{#order_data}}
+                                <tr>
+                                    <th scope="col">{{product_name}}</th>
+                                    <th>{{product_number}}</th>
+                                </tr>
+                            {{/order_data}}
                         </tbody>
                     </table>
                 {{/flag_list}}
