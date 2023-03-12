@@ -12,14 +12,15 @@ fun main() {
     connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
     transaction {
 
-        /*
+
+/*
         SchemaUtils.create(Account)
         SchemaUtils.create(User)
         SchemaUtils.create(Customer)
         SchemaUtils.create(Product)
-        SchemaUtils.drop(Order)
         SchemaUtils.create(Order)
-        */
+*/
+
 
         // Account.deleteAll()
         // User.deleteAll()
@@ -74,7 +75,8 @@ fun main() {
 
         Order.deleteAll()
 
-        /*
+
+/*
         Product.insert {
             it[productName] = "芳醇美濃路本醸造醬油（1.0L）"
             it[price] = 440
@@ -111,6 +113,6 @@ fun main() {
             it[productName] = "淡口醤油"
             it[price] = 500
         }
-         */
+*/
     }
 }

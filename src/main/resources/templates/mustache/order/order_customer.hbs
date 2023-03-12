@@ -127,10 +127,28 @@
                 {{/flag_confirm}}
                 {{#flag_confirm}}
                     <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">商品名</th>
+                                <th scope="col">本数</th>
+                                <th scope="col">値段（税込み：8%）</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            {{#orders}}
-                                <tr><th>{{product_name}}</th><td>{{order}}本</td></tr>
-                            {{/orders}}
+                            {{#order_data}}
+                                <tr>
+                                    <th>{{product_name}}</th>
+                                    <td>{{amount}}</td>
+                                    <td>{{price}}円（{{tax}}円）</td>
+                                </tr>
+                            {{/order_data}}
+                        </tbody>
+                        <tbody>
+                            <tr>
+                                <th>合計</th>
+                                <th>{{amounts}}</th>
+                                <td>{{price}}円（{{tax}}円）</td>
+                            </tr>
                         </tbody>
                     </table>
                     <br>

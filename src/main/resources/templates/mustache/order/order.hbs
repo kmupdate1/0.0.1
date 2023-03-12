@@ -89,16 +89,27 @@
                             <tr>
                                 <th scope="col">商品名</th>
                                 <th scope="col">本数</th>
+                                <th scope="col">値段（税込み：8%）</th>
                             </tr>
                         </thead>
                         <tbody>
                             {{#order_data}}
                                 <tr>
                                     <th scope="col">{{product_name}}</th>
-                                    <th>{{product_number}}</th>
+                                    <th>{{product_amount}}</th>
+                                    <th>{{product_price}}円（{{product_tax}}円）</th>
                                 </tr>
                             {{/order_data}}
                         </tbody>
+                        <thead>
+                            {{#total_data}}
+                                <tr>
+                                    <th>合計</th>
+                                    <th scope="col">{{product_amounts}}</th>
+                                    <th scope="col">{{product_prices}}円（{{product_taxes}}円）</th>
+                                </tr>
+                            {{/total_data}}
+                        </thead>
                     </table>
                 {{/flag_list}}
                 <br>

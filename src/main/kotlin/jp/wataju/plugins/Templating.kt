@@ -8,7 +8,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import jp.wataju.*
-import jp.wataju.deserialize.ProductOrder
+import jp.wataju.model.parser.OrderProducts
 import jp.wataju.model.table.*
 import jp.wataju.pool.CustomerRegistry
 import jp.wataju.pool.OrderRegistry
@@ -205,13 +205,13 @@ fun Application.configureTemplating() {
                     }
                     get("/{customer_id}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
-                        val customerId = call.parameters["customer_id"]
+                        val pCustomerId = call.parameters["customer_id"]
 
                         if (session.accountId != null) {
                             var customer: jp.wataju.model.entity.Customer? = null
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                val query = Customer.select { Customer.customerId eq UUID.fromString(customerId) }
+                                val query = Customer.select { Customer.customerId eq UUID.fromString(pCustomerId) }
                                 kotlin.runCatching {
                                     customer = jp.wataju.model.entity.Customer(query.first())
                                 }
@@ -338,13 +338,13 @@ fun Application.configureTemplating() {
                     }
                     get("/{product_id}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
-                        val productId = call.parameters["product_id"]
+                        val pProductId = call.parameters["product_id"]
 
                         if (session.accountId != null) {
                             var product: jp.wataju.model.entity.Product? = null
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                val query = Product.select { Product.productId eq UUID.fromString(productId) }
+                                val query = Product.select { Product.productId eq UUID.fromString(pProductId) }
                                 kotlin.runCatching {
                                     product = jp.wataju.model.entity.Product(query.first())
                                 }
@@ -415,9 +415,11 @@ fun Application.configureTemplating() {
 
                             var customer: jp.wataju.model.entity.Customer? = null
                             var order: jp.wataju.model.entity.Order
-                            var product: jp.wataju.model.entity.Product?
+                            var product: jp.wataju.model.entity.Product? = null
 
-                            val data = arrayListOf<Map<String, Any>>()
+                            val orderData = arrayListOf<Map<String, Any>>()
+                            val totalData = arrayListOf<Map<String, Any>>()
+                            var amounts= 0
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
                                 val query = Customer.select { Customer.customerId eq customerId }
@@ -428,33 +430,46 @@ fun Application.configureTemplating() {
                                 order = jp.wataju.model.entity.Order(orderQuery.first())
 
                                 // JSONをデシリアライズ
-                                val obj = Json.decodeFromString(ListSerializer(ProductOrder.serializer()), order.products)
+                                val obj = Json.decodeFromString(ListSerializer(OrderProducts.serializer()), order.products)
 
                                 // 取得した商品IDを元に商品名を検索
                                 obj.forEach {
-                                    if (it.number != 0) {
+                                    val amount = it.amount
+                                    if (amount != 0) {
                                         val productQuery =
                                             Product.select { Product.productId eq UUID.fromString(it.productId) }
                                         product = jp.wataju.model.entity.Product(productQuery.first())
 
                                         // 表示用リスト化
-                                        data.add(
+                                        orderData.add(
                                             mapOf(
                                                 "product_name" to product!!.productName,
-                                                "product_number" to it.number
+                                                "product_amount" to amount,
+                                                "product_price" to amount * product!!.price,
+                                                "product_tax" to amount * product!!.priceTax
                                             )
                                         )
+                                        amounts += amount
                                     }
                                 }
-
                             }
+
+                            totalData.add(
+                                mapOf(
+                                    "product_amounts" to amounts,
+                                    "product_prices" to amounts * product!!.price,
+                                    "product_taxes" to amounts * product!!.priceTax
+                                )
+                            )
+
                             val model = mapOf(
                                 "tab_title" to TAB_TITLE,
                                 "title" to TITLE,
                                 "identify" to session.identify,
                                 "page_message" to DISPLAY_ORDER_BY_CUSTOMER,
                                 "customer" to customer,
-                                "order_data" to data,
+                                "order_data" to orderData,
+                                "total_data" to totalData,
                                 "flag_list" to false
                             )
                             call.respond(MustacheContent("order/order.hbs", model))
@@ -465,7 +480,7 @@ fun Application.configureTemplating() {
                     get("/edit/{customer_id}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
 
-                        val customerId = call.parameters["customer_id"]
+                        val pCustomerId = call.parameters["customer_id"]
                         if (session.accountId != null) {
 
                             var customer: jp.wataju.model.entity.Customer? = null
@@ -473,7 +488,7 @@ fun Application.configureTemplating() {
 
                             connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                             transaction {
-                                val query = Customer.select { Customer.customerId eq UUID.fromString(customerId) }
+                                val query = Customer.select { Customer.customerId eq UUID.fromString(pCustomerId) }
                                 kotlin.runCatching {
                                     customer = jp.wataju.model.entity.Customer(query.first())
                                 }
@@ -502,43 +517,54 @@ fun Application.configureTemplating() {
                     post("/confirm/{customer_id}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
 
-                        val customerId = call.parameters["customer_id"]
+                        val pCustomerId = call.parameters["customer_id"]
                         val orderInfoParams = call.receiveParameters()
                         if (session.accountId != null) {
 
                             // パラメータが全部空のときは編集画面にリダイレクト
-                            if ((orderInfoParams["purchase-date"] ?: "") != "") {
+                            val purchaseDate = orderInfoParams["purchase-date"] ?: ""
+                            if (purchaseDate != "") {
 
                                 // 指定の顧客の購入情報一覧を記憶
                                 val orders: MutableMap<UUID, Int> = mutableMapOf()
                                 orderInfoParams.forEach { name, values ->
                                     if (name != "purchase-date") {
-                                        orders[UUID.fromString(name)] = values[0].toInt()
+                                        val amount = values[0].toInt()
+                                        orders[UUID.fromString(name)] = amount
                                     }
                                 }
+
                                 RegistryPool.orderRegistry = OrderRegistry(
-                                    UUID.fromString(customerId),
+                                    UUID.fromString(pCustomerId),
                                     orders,
-                                    orderInfoParams["purchase-date"] ?: ""
+                                    purchaseDate
                                 )
 
                                 // 表示用リスト作成
                                 var customer: jp.wataju.model.entity.Customer? = null
+                                var product:  jp.wataju.model.entity.Product? = null
                                 val orderData: ArrayList<Map<String, Any>> = arrayListOf()
+
+                                var amounts = 0
                                 connect(DATA_PATH, CUSTOMER_MANAGEMENT_SYSTEM)
                                 transaction {
-                                    val query = Customer.select { Customer.customerId eq UUID.fromString(customerId) }
+                                    val query = Customer.select { Customer.customerId eq UUID.fromString(pCustomerId) }
                                     kotlin.runCatching {
                                         customer = jp.wataju.model.entity.Customer(query.first())
                                     }
 
                                     orders.forEach {
-                                        if (it.value != 0) {
+                                        val value = it.value
+                                        if (value != 0) {
                                             val productQuery = Product.select { Product.productId eq it.key }
+                                            product = jp.wataju.model.entity.Product(productQuery.first())
+                                            amounts += value
                                             orderData.add(
                                                 mapOf(
-                                                    "product_name" to productQuery.first()[Product.productName],
-                                                    "order" to it.value
+                                                    "product_name" to product!!.productName,
+                                                    "amount" to value,
+                                                    "price" to value * product!!.price,
+                                                    "tax" to value * product!!.priceTax
                                                 )
                                             )
                                         }
@@ -551,14 +577,17 @@ fun Application.configureTemplating() {
                                     "identify" to session.identify,
                                     "page_message" to EDIT_AND_REGISTRY,
                                     "customer" to customer,
-                                    "orders" to orderData,
+                                    "order_data" to orderData,
+                                    "amounts" to amounts,
+                                    "price" to amounts * product!!.price,
+                                    "tax" to amounts * product!!.priceTax,
                                     "order_date" to RegistryPool.orderRegistry.orderDate,
                                     "flag_confirm" to true
                                 )
 
                                 call.respond(MustacheContent("order/order_customer.hbs", model))
                             } else {
-                                call.respondRedirect("$WATAJU$CUSTOMER_MANAGER$ORDER/edit/$customerId")
+                                call.respondRedirect("$WATAJU$CUSTOMER_MANAGER$ORDER/edit/$pCustomerId")
                             }
                         } else {
                             call.respondRedirect(REDIRECT_TO_LOGIN)
@@ -569,13 +598,14 @@ fun Application.configureTemplating() {
 
                         if ( session.accountId != null) {
 
+                            val pCustomerId = call.parameters["customer_id"]
                             val orderRegistry = RegistryPool.orderRegistry
-                            val customerId = UUID.fromString(call.parameters["customer_id"])
+                            val customerId = UUID.fromString(pCustomerId)
                             val orderDate = orderRegistry.orderDate
 
-                            val list = arrayListOf<ProductOrder>()
+                            val list = arrayListOf<OrderProducts>()
                             RegistryPool.orderRegistry.orders.forEach {
-                                list.add(ProductOrder(it.key.toString(), it.value))
+                                list.add(OrderProducts(it.key.toString(), it.value))
                             }
                             val products = Json.encodeToString(list)
 
@@ -589,7 +619,7 @@ fun Application.configureTemplating() {
                                 }
                             }
 
-                            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER/top")
+                            call.respondRedirect("$WATAJU$CUSTOMER_MANAGER$ORDER/$pCustomerId")
                         } else {
                             call.respondRedirect(REDIRECT_TO_LOGIN)
                         }
@@ -601,7 +631,6 @@ fun Application.configureTemplating() {
                 route(SETTING) {
                     get("/{identify}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
-                        call.parameters["identify"]
 
                         if (session.accountId != null) {
                             val model = mapOf(
@@ -618,7 +647,6 @@ fun Application.configureTemplating() {
                     }
                     post("/confirm/{identify}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
-                        call.parameters["identify"]
 
                         if (session.accountId != null) {
                             val userInfoParams = call.receiveParameters()
@@ -667,7 +695,6 @@ fun Application.configureTemplating() {
                     }
                     get("/registry/{identify}") {
                         val session = call.sessions.get() ?: AccountSession(null, null)
-                        call.parameters["identify"]
 
                         if (session.accountId != null) {
                             var user: jp.wataju.model.entity.User? = null
